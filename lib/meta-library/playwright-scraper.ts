@@ -39,9 +39,29 @@ function extractAdsFromJson(obj: unknown, found: RawGraphQLAd[] = []): RawGraphQ
   return found
 }
 
+// Parse a Meta Ad Library URL and extract params
+export function parseMetaAdLibraryUrl(rawUrl: string): {
+  pageId?: string
+  query?: string
+  country?: string
+  searchType?: string
+} {
+  try {
+    const url = new URL(rawUrl)
+    const pageId   = url.searchParams.get('view_all_page_id') ?? undefined
+    const query    = url.searchParams.get('search_terms') ?? url.searchParams.get('q') ?? undefined
+    const country  = url.searchParams.get('country') ?? undefined
+    const searchType = url.searchParams.get('search_type') ?? undefined
+    return { pageId, query, country, searchType }
+  } catch {
+    return {}
+  }
+}
+
 export async function scrapeAdLibrary(
   query: string,
-  country = 'ALL'
+  country = 'ALL',
+  pageId?: string,   // Meta page ID for brand-specific scraping
 ): Promise<Ad[]> {
   const { chromium } = await import('playwright')
 
@@ -82,14 +102,24 @@ export async function scrapeAdLibrary(
   })
 
   const countryParam = country === 'ALL' ? 'US' : country
-  const url =
-    `https://www.facebook.com/ads/library/` +
-    `?q=${encodeURIComponent(query)}` +
-    `&search_type=keyword_unordered` +
-    `&country=${countryParam}` +
-    `&active_status=all` +
-    `&ad_type=all` +
-    `&media_type=all`
+
+  // Build URL: by page_id (brand-specific) or keyword search
+  const url = pageId
+    ? `https://www.facebook.com/ads/library/` +
+      `?active_status=active` +
+      `&ad_type=all` +
+      `&country=${countryParam}` +
+      `&media_type=all` +
+      `&search_type=page` +
+      `&view_all_page_id=${pageId}` +
+      `&sort_data[direction]=desc&sort_data[mode]=total_impressions`
+    : `https://www.facebook.com/ads/library/` +
+      `?q=${encodeURIComponent(query)}` +
+      `&search_type=keyword_unordered` +
+      `&country=${countryParam}` +
+      `&active_status=all` +
+      `&ad_type=all` +
+      `&media_type=all`
 
   console.log(`[scraper] navigating to: ${url}`)
 

@@ -1,43 +1,63 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
 import { searchAdLibrary } from '@/lib/meta-library/api-client'
-import { scrapeAdLibrary } from '@/lib/meta-library/playwright-scraper'
+import { scrapeAdLibrary, parseMetaAdLibraryUrl } from '@/lib/meta-library/playwright-scraper'
 
 export async function POST(req: NextRequest) {
   const body = await req.json()
-  const { query, country = 'ALL' } = body
+  let { query, country = 'ALL', url: metaUrl, page_id } = body
 
-  if (!query) return NextResponse.json({ error: 'query required' }, { status: 400 })
+  // If a Meta Ad Library URL is pasted, extract params from it
+  if (metaUrl) {
+    const parsed = parseMetaAdLibraryUrl(metaUrl)
+    if (parsed.pageId) page_id = parsed.pageId
+    if (parsed.query && !query) query = parsed.query
+    if (parsed.country && parsed.country !== 'ALL') country = parsed.country
+  }
+
+  if (!query && !page_id) {
+    return NextResponse.json({ error: 'query, page_id, or url required' }, { status: 400 })
+  }
+
+  // Use page_id as the "query" label for the job if no keyword
+  const jobLabel = query || `page:${page_id}`
 
   const supabase = createServiceClient()
 
-  // Create job
   const { data: job } = await supabase
     .from('scrape_jobs')
-    .insert({ query, country, status: 'running' })
+    .insert({ query: jobLabel, country, status: 'running' })
     .select()
     .single()
 
   if (!job) return NextResponse.json({ error: 'Could not create job' }, { status: 500 })
 
-  console.log(`[scrape] job ${job.id} started for "${query}" in ${country}`)
+  console.log(`[scrape] job ${job.id} started for "${jobLabel}" in ${country}`)
 
   // Run async (don't await in the request)
-  runScrape(job.id, query, country).catch(console.error)
+  runScrape(job.id, query ?? '', country, page_id).catch(console.error)
 
   return NextResponse.json({ jobId: job.id })
 }
 
-async function runScrape(jobId: string, query: string, country: string) {
+async function runScrape(jobId: string, query: string, country: string, pageId?: string) {
   const supabase = createServiceClient()
 
   try {
-    console.log(`[scrape:${jobId}] trying Meta API…`)
-    let { ads, tokenInvalid } = await searchAdLibrary(query, country)
+    let ads: import('@/types/ad').Ad[] = []
 
-    if (tokenInvalid || ads.length === 0) {
-      console.log(`[scrape:${jobId}] API unavailable, falling back to Playwright…`)
-      ads = await scrapeAdLibrary(query, country)
+    if (pageId) {
+      // Brand-specific scrape via Playwright (page_id search doesn't work via Meta API)
+      console.log(`[scrape:${jobId}] scraping page_id=${pageId} via Playwright…`)
+      ads = await scrapeAdLibrary('', country, pageId)
+    } else {
+      console.log(`[scrape:${jobId}] trying Meta API for "${query}"…`)
+      const { ads: apiAds, tokenInvalid } = await searchAdLibrary(query, country)
+      ads = apiAds
+      if (tokenInvalid || ads.length === 0) {
+        console.log(`[scrape:${jobId}] API unavailable, falling back to Playwright…`)
+        ads = await scrapeAdLibrary(query, country)
+      }
     }
 
     console.log(`[scrape:${jobId}] got ${ads.length} ads, upserting…`)

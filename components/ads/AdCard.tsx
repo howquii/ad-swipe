@@ -180,7 +180,18 @@ export default function AdCard({ ad: rawAd, rank, onSave, onDetail }: Props) {
               : <><Bookmark size={12} /> Guardar</>
             }
           </button>
-          {ad.ad_snapshot_url ? (
+          {/* Link a todos los anuncios de la marca en Meta Ad Library */}
+          {ad.advertiser_page_id ? (
+            <a
+              href={`https://www.facebook.com/ads/library/?active_status=active&ad_type=all&country=ALL&search_type=page&view_all_page_id=${ad.advertiser_page_id}&sort_data[direction]=desc&sort_data[mode]=total_impressions`}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={e => e.stopPropagation()}
+              className="flex items-center gap-1.5 bg-white/15 border border-white/30 text-white text-[11px] font-medium px-3.5 py-2 rounded-full backdrop-blur-sm hover:bg-white/25 transition-colors"
+            >
+              <ExternalLink size={11} /> Meta
+            </a>
+          ) : ad.ad_snapshot_url ? (
             <a
               href={ad.ad_snapshot_url}
               target="_blank"
