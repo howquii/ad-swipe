@@ -114,7 +114,7 @@ export default function AdDetail({ ad: rawAd, onClose, onSave }: Props) {
 
   function handleSave() {
     setSaved(true)
-    onSave?.(ad)
+    if (ad) onSave?.(ad)
   }
 
   return (
