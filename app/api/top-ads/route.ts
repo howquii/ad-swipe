@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const minScore  = parseInt(searchParams.get('min_score') ?? '0')
   const sort      = searchParams.get('sort') ?? 'score'
   const page      = parseInt(searchParams.get('page') ?? '0')
-  const limit     = 60
+  const limit     = 100
 
   const supabase = createServiceClient()
 

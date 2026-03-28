@@ -5,9 +5,10 @@ import AdCard from '@/components/ads/AdCard'
 import AdDetail from '@/components/ads/AdDetail'
 import SaveModal from '@/components/collections/SaveModal'
 import FilterBar from '@/components/home/FilterBar'
+import BrandFooter from '@/components/home/BrandFooter'
 import { Loader2, Zap } from 'lucide-react'
 
-const PAGE_SIZE = 60
+const PAGE_SIZE = 100
 
 // Filters WITHOUT page — page is tracked separately to avoid double-fetch
 type Filters = Omit<SearchFilters, 'page'>
@@ -179,6 +180,8 @@ export default function TopPerformersPage() {
           </>
         )}
       </div>
+
+      <BrandFooter />
 
       {selectedAd && (
         <AdDetail

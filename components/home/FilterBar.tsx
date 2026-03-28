@@ -13,12 +13,10 @@ const COUNTRIES = [
 
 const INDUSTRIES = [
   { value: '', label: 'Todo' },
-  { value: 'ecommerce', label: 'E-comm' },
-  { value: 'travel', label: 'Travel' },
-  { value: 'tech', label: 'SaaS' },
-  { value: 'education', label: 'Edu' },
-  { value: 'fintech', label: 'Fintech' },
-  { value: 'fitness', label: 'Fitness' },
+  { value: 'crypto', label: '₿ Crypto' },
+  { value: 'banking', label: '🏦 Banca' },
+  { value: 'payments', label: '💳 Pagos' },
+  { value: 'investing', label: '📈 Inversión' },
 ]
 
 const SCORES = [
