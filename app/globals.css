@@ -1,0 +1,37 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --notion-bg: #FAFAFA;
+  --notion-sidebar: #F7F7F5;
+  --notion-hover: #EFEFEF;
+  --notion-border: #E5E5E3;
+  --notion-text: #37352F;
+  --notion-muted: #9B9A97;
+  --notion-accent: #0F7B6C;
+}
+
+body {
+  background-color: var(--notion-bg);
+  color: var(--notion-text);
+  font-family: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--notion-border);
+  border-radius: 3px;
+}
