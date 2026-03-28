@@ -76,6 +76,32 @@ export default function TopPerformersPage() {
 
   const hasMore = ads.length < total && !loading && !loadingMore
 
+  // Preload next page images in background when there are more ads to load
+  useEffect(() => {
+    if (!hasMore) return
+    const nextPage = pageRef.current + 1
+    const params = new URLSearchParams()
+    if (filters.country)    params.set('country', filters.country)
+    if (filters.industry)   params.set('industry', filters.industry)
+    if (filters.media_type) params.set('media_type', filters.media_type)
+    if (filters.min_score)  params.set('min_score', String(filters.min_score))
+    if (filters.sort)       params.set('sort', filters.sort)
+    params.set('page', String(nextPage))
+
+    fetch(`/api/top-ads?${params}`)
+      .then(r => r.json())
+      .then(json => {
+        // Preload images into browser cache
+        for (const ad of json.ads ?? []) {
+          if (ad.image_url) {
+            const img = new Image()
+            img.src = ad.image_url
+          }
+        }
+      })
+      .catch(() => {/* silently ignore */})
+  }, [hasMore, filters])
+
   return (
     <div className="flex flex-col h-screen overflow-hidden">
       {/* Header */}

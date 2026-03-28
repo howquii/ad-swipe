@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Ad, hydrateAd } from '@/types/ad'
 import { getScoreEmoji } from '@/lib/enrichment/performance-scorer'
 import { formatSpend } from '@/lib/enrichment/spend-estimator'
@@ -35,6 +35,26 @@ export default function AdCard({ ad: rawAd, rank, onSave, onDetail }: Props) {
   const ad = hydrateAd(rawAd)
   const [imgError, setImgError] = useState(false)
   const [saved, setSaved] = useState(false)
+  const [inView, setInView] = useState(false)
+  const cardRef = useRef<HTMLDivElement>(null)
+  const videoRef = useRef<HTMLVideoElement>(null)
+
+  // IntersectionObserver: lazy-reveal image + pause video when off-screen
+  useEffect(() => {
+    const el = cardRef.current
+    if (!el) return
+    const obs = new IntersectionObserver(
+      ([entry]) => {
+        setInView(entry.isIntersecting)
+        if (!entry.isIntersecting && videoRef.current) {
+          videoRef.current.pause()
+        }
+      },
+      { rootMargin: '200px', threshold: 0 }
+    )
+    obs.observe(el)
+    return () => obs.disconnect()
+  }, [])
 
   const score  = ad.performance_score ?? 0
   const label  = ad.score_label ?? 'Cold'
@@ -58,7 +78,7 @@ export default function AdCard({ ad: rawAd, rank, onSave, onDetail }: Props) {
   }
 
   return (
-    <div className="flex flex-col gap-1.5 select-none">
+    <div ref={cardRef} className="flex flex-col gap-1.5 select-none">
       {/* ── VISUAL CARD (portrait reel / flyer) ── */}
       <div
         className="relative rounded-xl overflow-hidden cursor-pointer group bg-gray-900"
@@ -69,10 +89,9 @@ export default function AdCard({ ad: rawAd, rank, onSave, onDetail }: Props) {
         {/* ── Thumbnail ── */}
         {thumb ? (
           <img
-            src={thumb}
+            src={inView ? thumb : undefined}
             alt={ad.advertiser_name}
             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
-            loading="lazy"
             onError={() => setImgError(true)}
           />
         ) : (
